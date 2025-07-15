@@ -6,7 +6,7 @@ export default StyleSheet.create({
 
   fabContainer: {
     position: "absolute",
-    bottom: 50, // Position slightly higher with the taller tab bar
+    bottom: 150, // Position slightly higher with the taller tab bar
     left: "50%", // Start from center
     marginLeft: -28, // Half of width to center the container
     alignItems: "center",
@@ -279,7 +279,7 @@ export default StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingBottom: Platform.OS === "ios" ? 20 : 20, // Account for tab bar height (100px) + padding
+    paddingBottom: Platform.OS === "ios" ? 150 : 150, // Account for tab bar height (100px) + padding
     borderTopWidth: 1,
     borderTopColor: COLORS.primaryCircle,
     backgroundColor: COLORS.white,
