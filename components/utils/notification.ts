@@ -81,7 +81,7 @@ export async function sendGlucoseAlert(
     const title = type === "high" ? "High Glucose Alert!!" : "Low Glucose Alert!!";
     const body =
         type === "high"
-            ? `Your glucose level is ${glucoseValue} mg/dL. Consider checking your meal or activity.`
+            ? `Your glucose level is ${glucoseValue} mg/dL. Calling Iben Anoos....`
             : `Your glucose level is ${glucoseValue} mg/dL. Consider having a snack.`;
 
     await sendNotification(title, body);
