@@ -1,0 +1,16 @@
+{
+  "editor.autoClosingBrackets": "never",
+  "editor.autoClosingQuotes": "never",
+  "editor.autoSurround": "never",
+  "editor.formatOnType": false,
+  "html.autoClosingTags": false,
+  "editor.quickSuggestions": false,
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.parameterHints.enabled": false,
+  "emmet.triggerExpansionOnTab": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "never",
+    "source.organizeImports": "never",
+    "source.sortMembers": "explicit"
+  }
+}
