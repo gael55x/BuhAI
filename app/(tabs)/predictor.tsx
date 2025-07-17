@@ -1,32 +1,89 @@
 import styles from "@/app/style";
-import { COLORS, MOCK_DATA } from "@/constants/DiabetesConstants";
+import { COLORS } from "@/constants/DiabetesConstants";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { apiService, GlucosePrediction } from "@/services/api";
+import React, { useEffect, useState } from "react";
+import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from "react-native";
  
 export default function PredictorScreen() {
-    // Generate predicted glucose values (30 mins from now)
-    const currentGlucose =
-        MOCK_DATA.glucoseData[MOCK_DATA.glucoseData.length - 1];
-    const predictedValues = [
-        currentGlucose + 5,
-        currentGlucose + 8,
-        currentGlucose + 12,
-        currentGlucose + 15,
-    ];
+    const [predictionData, setPredictionData] = useState<GlucosePrediction | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [currentGlucose, setCurrentGlucose] = useState(120);
+    
+    // Fetch prediction data
+    const fetchPrediction = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Get current glucose and prediction
+            const [healthData, prediction] = await Promise.all([
+                apiService.getHealthData(),
+                apiService.getGlucosePrediction(currentGlucose)
+            ]);
+            
+            setCurrentGlucose(healthData.glucose);
+            setPredictionData(prediction);
+        } catch (err) {
+            console.error('Error fetching prediction:', err);
+            setError('Failed to load prediction data');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    useEffect(() => {
+        fetchPrediction();
+    }, []);
+    
+    // Generate predicted glucose values for chart display
+    const generateChartData = () => {
+        if (!predictionData) return [];
+        
+        const baseGlucose = currentGlucose;
+        const pred30 = predictionData.predictions["30min"];
+        const pred60 = predictionData.predictions["60min"];
+        
+        // Create intermediate values for smoother chart
+        const chartData = [];
+        for (let i = 0; i <= 6; i++) {
+            if (i <= 3) {
+                // Current readings (past 15 minutes)
+                chartData.push(baseGlucose + (Math.random() - 0.5) * 10);
+            } else {
+                // Predicted values (next 30 minutes)
+                const progress = (i - 3) / 3; // 0 to 1
+                const predictedValue = baseGlucose + (pred30 - baseGlucose) * progress;
+                chartData.push(predictedValue);
+            }
+        }
+        
+        return chartData;
+    };
+    
+    const chartData = generateChartData();
 
     // Analysis based on predictions
     const getPredictionAnalysis = () => {
-        const avgPredicted =
-            predictedValues.reduce((a, b) => a + b, 0) / predictedValues.length;
-        if (avgPredicted > 180) {
+        if (!predictionData) {
+            return {
+                trend: "Loading",
+                color: "#6b7280",
+                advice: "Loading prediction data...",
+                icon: "trending-up" as "trending-up" | "trending-down",
+            };
+        }
+        
+        const predicted30 = predictionData.predictions["30min"];
+        if (predicted30 > 180) {
             return {
                 trend: "Rising High",
                 color: "#ef4444",
                 advice: "Your glucose is predicted to rise above target range. Consider checking your recent meal intake or activity level.",
                 icon: "trending-up" as "trending-up" | "trending-down",
             };
-        } else if (avgPredicted < 80) {
+        } else if (predicted30 < 80) {
             return {
                 trend: "Dropping Low",
                 color: "#ef4444",
@@ -56,7 +113,58 @@ export default function PredictorScreen() {
                 <Text style={styles.headerSubtitle}>
                     AI-powered 30-minute forecast
                 </Text>
+                <TouchableOpacity
+                    style={{
+                        backgroundColor: COLORS.primary,
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                        marginTop: 10,
+                    }}
+                    onPress={fetchPrediction}
+                    disabled={loading}
+                >
+                    <Text style={{ color: 'white', fontWeight: '600' }}>
+                        {loading ? 'Loading...' : 'Refresh Prediction'}
+                    </Text>
+                </TouchableOpacity>
             </View>
+
+            {/* Loading State */}
+            {loading && (
+                <View style={{ alignItems: 'center', padding: 40 }}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <Text style={{ marginTop: 16, color: '#6b7280' }}>
+                        Generating AI prediction...
+                    </Text>
+                </View>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <View style={{ alignItems: 'center', padding: 40 }}>
+                    <Text style={{ color: '#ef4444', textAlign: 'center', marginBottom: 16 }}>
+                        {error}
+                    </Text>
+                    <TouchableOpacity
+                        style={{
+                            backgroundColor: COLORS.primary,
+                            paddingHorizontal: 16,
+                            paddingVertical: 8,
+                            borderRadius: 8,
+                        }}
+                        onPress={fetchPrediction}
+                    >
+                        <Text style={{ color: 'white', fontWeight: '600' }}>
+                            Retry
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Main Content */}
+            {!loading && !error && predictionData && (
+                <>
 
             {/* Prediction Chart */}
             <View style={styles.chartCard}>
@@ -76,9 +184,10 @@ export default function PredictorScreen() {
                         <View style={[styles.gridLine, { top: "80%" }]} />
 
                         {/* Current glucose points (green) */}
-                        {MOCK_DATA.glucoseData.slice(-4).map((value, index) => (
+                        {/* Chart data points */}
+                        {chartData.map((value: number, index: number) => (
                             <View
-                                key={`current-${index}`}
+                                key={`chart-${index}`}
                                 style={[
                                     styles.dataPoint,
                                     {
@@ -87,25 +196,7 @@ export default function PredictorScreen() {
                                             ((value - 70) / (250 - 70)) * 80 +
                                             10
                                         }%`,
-                                        backgroundColor: "#10b981",
-                                    },
-                                ]}
-                            />
-                        ))}
-
-                        {/* Predicted glucose points (red) */}
-                        {predictedValues.map((value, index) => (
-                            <View
-                                key={`predicted-${index}`}
-                                style={[
-                                    styles.dataPoint,
-                                    {
-                                        left: `${((index + 4) / 7) * 45 + 5}%`,
-                                        bottom: `${
-                                            ((value - 70) / (250 - 70)) * 80 +
-                                            10
-                                        }%`,
-                                        backgroundColor: "#ef4444",
+                                        backgroundColor: index <= 3 ? "#10b981" : "#ef4444",
                                     },
                                 ]}
                             />
@@ -195,7 +286,7 @@ export default function PredictorScreen() {
                         <Text
                             style={[styles.detailValue, { color: "#ef4444" }]}
                         >
-                            {predictedValues[predictedValues.length - 1]} mg/dL
+                            {predictionData ? Math.round(predictionData.predictions["30min"]) : "--"} mg/dL
                         </Text>
                     </View>
                 </View>
@@ -233,6 +324,8 @@ export default function PredictorScreen() {
                     </View>
                 </View>
             </View>
+                </>
+            )}
         </ScrollView>
     );
 }

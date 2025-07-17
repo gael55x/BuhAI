@@ -1,15 +1,17 @@
 import styles from "@/app/style";
 import { sendGlucoseAlert } from "@/components/utils/notification";
-import { GLUCOSE_LIMITS, MOCK_DATA } from "@/constants/DiabetesConstants";
+import { GLUCOSE_LIMITS } from "@/constants/DiabetesConstants";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { apiService, HealthData } from "@/services/api";
 import * as Notifications from "expo-notifications";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, ActivityIndicator } from "react-native";
 
 export default function SensorsScreen() {
-    const [glucoseValue, setGlucoseValue] = useState(
-        MOCK_DATA.glucoseData[MOCK_DATA.glucoseData.length - 1]
-    );
+    const [healthData, setHealthData] = useState<HealthData | null>(null);
+    const [glucoseTrend, setGlucoseTrend] = useState<number[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const requestNotificationPermissions = async () => {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -18,48 +20,65 @@ export default function SensorsScreen() {
         }
     };
 
+    // Fetch health data from API
+    const fetchHealthData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const [healthDataResponse, trendData] = await Promise.all([
+                apiService.getHealthData(),
+                apiService.getGlucoseTrend()
+            ]);
+            
+            setHealthData(healthDataResponse);
+            setGlucoseTrend(trendData);
+            
+            // Send glucose alert if needed
+            if (healthDataResponse.glucose > 190) {
+                await sendGlucoseAlert(healthDataResponse.glucose, "high");
+            } else if (healthDataResponse.glucose < 80) {
+                await sendGlucoseAlert(healthDataResponse.glucose, "low");
+            }
+        } catch (err) {
+            console.error('Error fetching health data:', err);
+            setError('Failed to load health data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const initializeNotifications = async () => {
+        const initializeApp = async () => {
             await requestNotificationPermissions();
-            await sendGlucoseAlert(190, "high");
+            await fetchHealthData();
         };
-        initializeNotifications();
+        initializeApp();
     }, []);
 
-    // Send test notification
-    // Removed or replace with a valid function if needed
-
-    // Send glucose alert
-
+    // Refresh data periodically
     useEffect(() => {
         const interval = setInterval(() => {
-            setGlucoseValue((prev) => {
-                const newValue = prev + (Math.random() - 0.5) * 4;
-                return Math.round(
-                    Math.max(
-                        GLUCOSE_LIMITS.min,
-                        Math.min(GLUCOSE_LIMITS.max, newValue)
-                    )
-                );
-            });
-        }, 5000);
+            fetchHealthData();
+        }, 30000); // Refresh every 30 seconds
         return () => clearInterval(interval);
     }, []);
 
     // Calculate glucose status and color
     const getGlucoseStatus = () => {
-        if (glucoseValue < 80) return { status: "Low", color: "#ef4444" };
-        if (glucoseValue > 160) return { status: "High", color: "#f59e0b" };
+        if (!healthData) return { status: "Loading", color: "#6b7280" };
+        const glucose = healthData.glucose;
+        if (glucose < 80) return { status: "Low", color: "#ef4444" };
+        if (glucose > 160) return { status: "High", color: "#f59e0b" };
         return { status: "Normal", color: "#10b981" };
     };
 
     const { status, color } = getGlucoseStatus();
 
     // Calculate angle for circular progress (0-270 degrees for 3/4 circle)
-    const glucosePercentage = Math.min(
-        Math.max((glucoseValue - 70) / (180 - 70), 0),
+    const glucosePercentage = healthData ? Math.min(
+        Math.max((healthData.glucose - 70) / (180 - 70), 0),
         1
-    );
+    ) : 0;
     const angle = glucosePercentage * 270;
 
     return (
@@ -105,7 +124,9 @@ export default function SensorsScreen() {
 
                     {/* Center Content */}
                     <View style={styles.centerContent}>
-                        <Text style={styles.glucoseValue}>{glucoseValue}</Text>
+                        <Text style={styles.glucoseValue}>
+                            {healthData ? healthData.glucose : "--"}
+                        </Text>
                         <Text style={styles.glucoseUnit}>mg/dL</Text>
                         <View style={styles.statusContainer}>
                             <Text style={[styles.statusText, { color }]}>
@@ -138,7 +159,7 @@ export default function SensorsScreen() {
                             <Text style={styles.metricTitle}>Sleep</Text>
                         </View>
                         <Text style={styles.metricValue}>
-                            {MOCK_DATA.sleep}
+                            {healthData?.sleep || "--"}
                         </Text>
                         <Text style={styles.metricSubtext}>Last night</Text>
                         <View style={styles.sleepQuality}>
@@ -163,7 +184,7 @@ export default function SensorsScreen() {
                             <Text style={styles.metricTitle}>Heart Rate</Text>
                         </View>
                         <Text style={styles.metricValue}>
-                            {MOCK_DATA.heartRate}
+                            {healthData?.heartRate || "--"}
                         </Text>
                         <Text style={styles.metricSubtext}>BPM</Text>
                         <View style={styles.heartRateRange}>
@@ -185,7 +206,7 @@ export default function SensorsScreen() {
                     <View style={styles.stepsContent}>
                         <View style={styles.stepsLeft}>
                             <Text style={styles.metricValue}>
-                                {MOCK_DATA.steps.toLocaleString()}
+                                {healthData?.steps?.toLocaleString() || "--"}
                             </Text>
                             <Text style={styles.metricSubtext}>
                                 of 10,000 goal
@@ -198,14 +219,14 @@ export default function SensorsScreen() {
                                         styles.progressFill,
                                         {
                                             width: `${
-                                                (MOCK_DATA.steps / 10000) * 100
+                                                healthData ? (healthData.steps / 10000) * 100 : 0
                                             }%`,
                                         },
                                     ]}
                                 />
                             </View>
                             <Text style={styles.progressText}>
-                                {Math.round((MOCK_DATA.steps / 10000) * 100)}%
+                                {healthData ? Math.round((healthData.steps / 10000) * 100) : 0}%
                                 complete
                             </Text>
                         </View>
@@ -242,9 +263,9 @@ export default function SensorsScreen() {
 
                         {/* Glucose trend line simulation */}
                         <View style={styles.trendLine}>
-                            {MOCK_DATA.glucoseData
+                            {glucoseTrend
                                 .slice(-8)
-                                .map((value, index) => (
+                                .map((value: number, index: number) => (
                                     <View
                                         key={index}
                                         style={[
