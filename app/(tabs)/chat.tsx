@@ -31,7 +31,7 @@ export default function ChatScreen() {
             id: 1,
             type: "ai",
             message:
-                "Hello! Ako si BuhAI, imong personal nga tabang sa diabetes. Makatabang ko nimo sa pagdumala sa glucose, pagplano sa pagkaon, ug mga kasayuran sa panglawas. Unsaon nako pagtabang nimo karon?",
+                "Hello! I'm BuhAI, your personal diabetes assistant. I can help you manage your glucose levels, plan your meals, and provide health insights. How can I assist you today?",
             time: new Date().toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",

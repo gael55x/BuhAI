@@ -3,7 +3,7 @@ import { COLORS } from "@/constants/DiabetesConstants";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { apiService, GlucosePrediction } from "@/services/api";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, ActivityIndicator } from "react-native";
  
 export default function PredictorScreen() {
     const [predictionData, setPredictionData] = useState<GlucosePrediction | null>(null);
@@ -128,22 +128,12 @@ export default function PredictorScreen() {
             {/* Error State */}
             {error && (
                 <View style={{ alignItems: 'center', padding: 40 }}>
-                    <Text style={{ color: '#ef4444', textAlign: 'center', marginBottom: 16 }}>
+                    <Text style={{ color: '#ef4444', textAlign: 'center' }}>
                         {error}
                     </Text>
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: COLORS.primary,
-                            paddingHorizontal: 16,
-                            paddingVertical: 8,
-                            borderRadius: 8,
-                        }}
-                        onPress={fetchPrediction}
-                    >
-                        <Text style={{ color: 'white', fontWeight: '600' }}>
-                            Retry
-                        </Text>
-                    </TouchableOpacity>
+                    <Text style={{ color: '#6b7280', textAlign: 'center', marginTop: 8 }}>
+                        Please check your connection and try again later.
+                    </Text>
                 </View>
             )}
 
@@ -299,24 +289,25 @@ export default function PredictorScreen() {
                 </View>
 
                 <View style={styles.insightsList}>
-                    <View style={styles.insightItem}>
-                        <Text style={styles.insightText}>
-                            • Based on your recent patterns, glucose tends to
-                            rise slightly after this time of day
-                        </Text>
-                    </View>
-                    <View style={styles.insightItem}>
-                        <Text style={styles.insightText}>
-                            • Your last meal was 2 hours ago, which may
-                            contribute to the predicted trend
-                        </Text>
-                    </View>
-                    <View style={styles.insightItem}>
-                        <Text style={styles.insightText}>
-                            • Consider light activity to help maintain stable
-                            levels
-                        </Text>
-                    </View>
+                    {predictionData && (
+                        <>
+                            <View style={styles.insightItem}>
+                                <Text style={styles.insightText}>
+                                    • Current glucose level: {currentGlucose} mg/dL
+                                </Text>
+                            </View>
+                            <View style={styles.insightItem}>
+                                <Text style={styles.insightText}>
+                                    • Predicted 30-min level: {predictionData.predictions["30min"]} mg/dL
+                                </Text>
+                            </View>
+                            <View style={styles.insightItem}>
+                                <Text style={styles.insightText}>
+                                    • Trend: {analysis.trend} - {analysis.advice}
+                                </Text>
+                            </View>
+                        </>
+                    )}
                     {predictionData?.message?.includes("Fallback") && (
                         <View style={styles.insightItem}>
                             <Text style={[styles.insightText, { color: '#f59e0b' }]}>
