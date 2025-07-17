@@ -5,6 +5,7 @@ BuhAI is a comprehensive diabetes management application that combines a modern 
 ## Key Features
 
 - **24/7 Personal Diabetes Assistant**: AI-powered chat interface for real-time diabetes management
+- **LSTM Glucose Prediction**: Advanced machine learning models predicting glucose levels 30 and 60 minutes ahead
 - **Predictive Insights**: Advanced RAG (Retrieval-Augmented Generation) system for personalized recommendations
 - **Bisaya Language Support**: User-friendly interface in conversational Cebuano
 - **Real-time Glucose Monitoring**: Integration with CGM data for accurate predictions
@@ -24,6 +25,7 @@ The app consists of two main components:
 
 ### Backend (Python/Flask)
 - **Hybrid RAG System**: Combines retrieved unstructured text with structured data
+- **LSTM Prediction Models**: Multivariate time series models for glucose forecasting
 - **ChromaDB Vector Store**: Fast semantic retrieval of user logs
 - **SQLite Database**: Structured storage of user data and health metrics
 - **Gemini AI Integration**: Natural language processing for Bisaya responses
@@ -62,9 +64,9 @@ The app consists of two main components:
 
 ### Backend Setup
 
-1. **Navigate to the RAG system**
+1. **Navigate to the backend system**
    ```bash
-   cd RAG-SIMPLIFIED
+   cd BuhAI-Backend
    ```
 
 2. **Create virtual environment**
@@ -80,7 +82,7 @@ The app consists of two main components:
 
 4. **Set up environment variables**
    ```bash
-   # Create .env file in RAG-SIMPLIFIED directory
+   # Create .env file in BuhAI-Backend directory
    echo "GEMINI_API_KEY=your_api_key_here" > .env
    ```
 
@@ -94,7 +96,12 @@ The app consists of two main components:
    python app.py
    ```
 
-The backend API will be available at `http://localhost:5000`
+The backend API will be available at `http://localhost:4000`
+
+7. **Test LSTM integration** (optional)
+   ```bash
+   python test_lstm_integration.py
+   ```
 
 ## 📱 Usage
 
@@ -104,10 +111,17 @@ The backend API will be available at `http://localhost:5000`
 - Receive personalized insights based on your health data
 - Get real-time glucose predictions and recommendations
 
+### LSTM Prediction Features
+- **30-minute predictions**: Short-term glucose forecasting for immediate decisions
+- **60-minute predictions**: Extended horizon for meal and activity planning
+- **Multivariate inputs**: Considers meals, activity, sleep, and time patterns
+- **Real-time processing**: Instant predictions via REST API
+
 ### Sample Interactions
 - "I just ate 2 cups of rice and chicken"
 - "What's my glucose trend today?"
 - "Should I exercise now?"
+- "Predict my glucose in 30 minutes"
 - "Unsa ang akong sugar level karon?" (What's my sugar level now?)
 
 ## API Endpoints
@@ -141,6 +155,35 @@ GET /api/v1/inactivity-check
 GET /api/v1/daily-summary
 ```
 
+### LSTM Glucose Prediction
+```bash
+POST /api/v1/predict
+Content-Type: application/json
+
+{
+  "glucose_readings": [120, 125, 130, ...],
+  "meal_flags": [0, 0, 1, ...],
+  "activity_levels": [0, 1, 0, ...],
+  "sleep_quality": 0,
+  "horizon": "both"
+}
+```
+
+### Prediction Health Check
+```bash
+GET /api/v1/predict/health
+```
+
+### Model Information
+```bash
+GET /api/v1/predict/info
+```
+
+### Sample Prediction Test
+```bash
+GET /api/v1/predict/sample
+```
+
 ## Testing
 
 For detailed API testing instructions, see [RAG-SIMPLIFIED/TESTING_README.md](RAG-SIMPLIFIED/TESTING_README.md)
@@ -158,18 +201,20 @@ For detailed API testing instructions, see [RAG-SIMPLIFIED/TESTING_README.md](RA
    npx expo start
    
    # Terminal 2: Backend
-   cd RAG-SIMPLIFIED && python app.py
+   cd BuhAI-Backend && python app.py
    ```
 
 3. **Update IP address**
    - Update the backend API URL in `app/(tabs)/chat.tsx` to match your local IP
-   - Default: `http://192.168.20.27:5000/api/v1/insight`
+   - Default: `http://192.168.20.27:4000/api/v1/insight`
+   - LSTM API: `http://192.168.20.27:4000/api/v1/predict`
 
 ## Documentation
 
 - **Frontend**: Built with Expo and React Native
-- **Backend**: Detailed documentation in [RAG-SIMPLIFIED/README.md](RAG-SIMPLIFIED/README.md)
-- **API Testing**: Instructions in [RAG-SIMPLIFIED/TESTING_README.md](RAG-SIMPLIFIED/TESTING_README.md)
+- **Backend**: Detailed documentation in [BuhAI-Backend/README.md](BuhAI-Backend/README.md)
+- **LSTM Models**: Training and prediction details in backend documentation
+- **API Testing**: Test LSTM integration with [BuhAI-Backend/test_lstm_integration.py](BuhAI-Backend/test_lstm_integration.py)
 - **Routing**: App structure documented in [ROUTING_STRUCTURE.md](ROUTING_STRUCTURE.md)
 
 ## Security
