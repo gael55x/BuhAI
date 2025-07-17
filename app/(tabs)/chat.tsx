@@ -92,7 +92,7 @@ export default function ChatScreen() {
             console.log("API Response Success:", JSON.stringify(data, null, 2));
 
             const text =
-                data.reply_bisaya || "Sorry, I could not generate a response.";
+                data.reply || data.reply_bisaya || "Sorry, I could not generate a response.";
             console.log("Extracted text:", text.substring(0, 100) + "...");
 
             // Add AI response to conversation
