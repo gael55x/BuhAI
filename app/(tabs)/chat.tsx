@@ -59,7 +59,7 @@ export default function ChatScreen() {
         setIsLoading(true);
 
         try {
-            const backendApiUrl = "http://192.168.8.247:4000/api/v1/chat";
+            const backendApiUrl = "http://localhost:4000/api/v1/chat";
 
             console.log("Making API request to BuhAI backend...");
 

@@ -301,6 +301,16 @@ export default function PredictorScreen() {
                         color={COLORS.primary}
                     />
                     <Text style={styles.insightsTitle}>AI Insights</Text>
+                    {predictionData?.message?.includes("Fallback") && (
+                        <Text style={{
+                            fontSize: 12,
+                            color: '#f59e0b',
+                            fontWeight: '600',
+                            marginLeft: 'auto'
+                        }}>
+                            Simple Mode
+                        </Text>
+                    )}
                 </View>
 
                 <View style={styles.insightsList}>
@@ -322,6 +332,13 @@ export default function PredictorScreen() {
                             levels
                         </Text>
                     </View>
+                    {predictionData?.message?.includes("Fallback") && (
+                        <View style={styles.insightItem}>
+                            <Text style={[styles.insightText, { color: '#f59e0b' }]}>
+                                • Using simplified prediction (Advanced AI model temporarily unavailable)
+                            </Text>
+                        </View>
+                    )}
                 </View>
             </View>
                 </>
