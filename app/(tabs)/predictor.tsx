@@ -113,21 +113,6 @@ export default function PredictorScreen() {
                 <Text style={styles.headerSubtitle}>
                     AI-powered 30-minute forecast
                 </Text>
-                <TouchableOpacity
-                    style={{
-                        backgroundColor: COLORS.primary,
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                        marginTop: 10,
-                    }}
-                    onPress={fetchPrediction}
-                    disabled={loading}
-                >
-                    <Text style={{ color: 'white', fontWeight: '600' }}>
-                        {loading ? 'Loading...' : 'Refresh Prediction'}
-                    </Text>
-                </TouchableOpacity>
             </View>
 
             {/* Loading State */}
